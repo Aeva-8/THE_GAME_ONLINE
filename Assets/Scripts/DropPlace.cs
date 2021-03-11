@@ -39,7 +39,7 @@ public class DropPlace : MonoBehaviour , IDropHandler
                 GameData.PlayerHand[GameData.Turn].Remove(obj_num);
                 GameData.Field[Field_num].Add(obj_num);
                 Text card_text = eventData.pointerDrag.transform.GetChild(0).gameObject.GetComponent<Text>();
-                card_text.fontSize = 45;
+                //card_text.fontSize = 45;
                 card.Field = this.transform;
                 if (mainscript.GameClear_Check() == 1)
                 {
