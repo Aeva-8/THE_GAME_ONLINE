@@ -18,7 +18,6 @@ public class Ready : MonoBehaviour
     }
     public void OnClick()
     {
-        Main mainscript = main.GetComponent<Main>();
-        mainscript.Ready();
+        
     }
 }

@@ -4,277 +4,496 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using WebSocketSharp;
+using System.Threading;
+using Newtonsoft.Json;
 
 public static class GameData
 {
-    public static int RoomId;
-    public static int GameStatus = 1;
+    public static string UUId;
+    public static int Player_Index;
+    public static int Turn_Index;
+    public static string RoomId;
+    public static string Player_Name;
+    public static int gameState = 0;
     public static int Clear = -1;
-    public static int PlayerLimit = 4;
+    public static int PlayerLimit=-1;
     public static int Hand_Limit = 6;
     public static int Turn = 0;
     //Turnはどのプレイヤーのターンかの情報を持つ
     public static  List<int> Deck = new List<int>();
-    public static List<List<int>> PlayerHand = new List<List<int>>();
     public static List<List<int>> Field = new List<List<int>>();
+    public static List<PlayerData> Players = new List<PlayerData>();
 }
+public  class PlayerData
+{
+    public  List<int> hands = new List<int>();
+    public  string id;
+    public  string name;
+    public  int plays;
+}
+
+
+
+
+
+
+
+[Serializable]
+public  class Create_StartSerializData
+{
+    public  string func;
+    public  string name;
+    public  int playerLimit;
+    public  string roomId;
+    public  string uuid;
+}
+[Serializable]
+public class Enter_StartSerializData
+{
+    public string func;
+    public string name;
+    public string roomId;
+    public string uuid;
+}
+[Serializable]
+public class HeatbeatData
+{
+    public string func;
+    public string kind;
+}
+[Serializable]
+public class GameSerializData
+{
+    public string func;
+    public RoomObject roomObject;
+}
+[Serializable]
+public  class RoomObject
+{
+    public  List<int> deck = new List<int>();
+    public int gameState;
+    public int gameTurnIndex;
+    public int minPlays;
+    public int playerLimit;
+    public Dictionary<string, List<int>> leads = new Dictionary<string, List<int>>();
+    public string roomId;
+    public List<Player> players = new List<Player>();
+}
+[Serializable]
+public class Leads
+{
+    public List<int> asc = new List<int>();
+}
+[Serializable]
+public class Player
+{
+    public List<int> hands = new List<int>();
+    public string id;
+    public string name;
+    public int plays;
+}
+[Serializable]
+public class Update
+{
+    public string func;
+    public RoomObject roomObject;
+    public string updateType;
+}
+[Serializable]
+public class Progress
+{
+    public string func;
+    public RoomObject roomObject;
+    public string progType;
+}
+[Serializable]
+public class GameEnd
+{
+    public string func;
+    public string endType;
+}
+
+
+
+
+
+
 public class Main : MonoBehaviour
 {
     [SerializeField] GameObject cardPrefab;
     [SerializeField] Transform Hand_Field;
     [SerializeField] GameObject readyUI;
     [SerializeField] GameObject Status;
+    [SerializeField] Transform Board;
+    [SerializeField] GameObject Massagetext;
+
     public int player_state = -1;
     public int play_count = 0;
     public int min_plays = 2;
+    public bool start=false;
+    public WebSocket webSocket = null;
+    public bool updatefield=false;
+    public bool yourturn = false;
+    public bool updatehand = false;
+    public bool badend = false;
+    public List<List<int>> before_field= new List<List<int>>();
+    public List<int> before_hand = new List<int>();
+
     //-1=操作不能.0=開始待機,1=操作可能,2=終了後待機
-    void Generate_Field()
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            List<int> add_tmp = new List<int>();
-            GameData.Field.Add(add_tmp);
-        }
-        GameData.Field[0].Add(100);
-        GameData.Field[1].Add(100);
-        GameData.Field[2].Add(1);
-        GameData.Field[3].Add(1);
 
-    }
-    void Generate_Deck()
+
+    void  Instantiate_Card(int i,int j)
     {
-        for (int i=2; i < 100; i++)
+        //-1で手札0,1,2,3はField
+        if (j == -1)
         {
-            GameData.Deck.Add(i);
+            if (cardPrefab == null)
+            {
+                Debug.Log("NULL");
+            }
+             GameObject obj =  Instantiate(cardPrefab, Hand_Field);
+            obj.name = i.ToString();
+            Text obj_num = obj.transform.GetChild(0).gameObject.GetComponent<Text>();
+            obj_num.text = i.ToString();
         }
-        GameData.Deck = GameData.Deck.OrderBy(i => Guid.NewGuid()).ToList();
+        else {
+            GameObject obj = Instantiate(cardPrefab, Board.GetChild(j).gameObject.transform);
+            obj.name = i.ToString();
+            Text obj_num = obj.transform.GetChild(0).gameObject.GetComponent<Text>();
+            obj_num.text = i.ToString();
+
+
+
+        }
+        
     }
-    void SetPlayer_Hand()
+    public void Turn_End()
     {
-        for (int i = 0; i < GameData.PlayerLimit; i++)
-        {
-            GameData.PlayerHand.Add(new List<int>());
-        }
-        foreach (List<int> item in GameData.PlayerHand)
-        {
-            Draw_Card(item);
-        }
-        Text txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-        txt_tmp.text = "player" + GameData.Turn.ToString() + "のターン";
+        Progress play_progress = new Progress();
+        play_progress.func = "game-progress";
+        play_progress.progType = "turn-end";
+        play_progress.roomObject = SerializingData();
+        string json = JsonConvert.SerializeObject(play_progress); //整形する
+        Debug.Log("play json :" + json);
+        webSocket.Send(json);
         player_state = 0;
-
     }
-    void Generate_bundleHand()
+
+
+
+    public void Update_Ui()
     {
-        foreach (int i in GameData.PlayerHand[GameData.Turn])
+        int temp = 0;
+        foreach (PlayerData item in GameData.Players)
         {
-            Instantiate_Card(i);
+            temp += item.hands.Count();
+        }
+        Text text_tmp = Status.transform.GetChild(0).gameObject.GetComponent<Text>();
+        text_tmp.text = "山札" + GameData.Deck.Count() + "枚 : 残りカード" + (GameData.Deck.Count() + temp)+"枚\r\n"+"現在のプレイ数/必要プレイ数 : "+play_count+"/"+min_plays;
+
+        Massagetext.GetComponent<Text>().text = GameData.Players[GameData.Turn_Index].name+"のターンです";
+    }
+    void StartHand()
+    {
+        //Debug.Log("Count" + GameData.Players[GameData.Turn_Index].hands.Count());
+        
+        foreach (int i in GameData.Players[GameData.Player_Index].hands)
+        {
+            Instantiate_Card(i,-1);
         }
     }
-    void Generate_SplitHand()
+    void UpdateHand(List<int> before_tmp, List<int> after_tmp)
     {
-        List<int> before_tmp = new List<int>(GameData.PlayerHand[GameData.Turn]);
-        Draw_Card(GameData.PlayerHand[GameData.Turn]);
-        List<int> after_tmp = GameData.PlayerHand[GameData.Turn];
         IEnumerable<int> exceptlist = after_tmp.Except<int>(before_tmp);
         foreach (int i in exceptlist)
         {
 
-            Instantiate_Card(i);
+            Instantiate_Card(i,-1);
         }
     }
-    void Draw_Card(List<int> item)
+    void UpdateField(List<int> before_tmp, List<int> after_tmp,int j)
     {
-        //上限までカードを山札から引いて手札に加える
-        while (item.Count() != GameData.Hand_Limit)
+        IEnumerable<int> exceptlist = after_tmp.Except<int>(before_tmp);
+
+        foreach (int i in exceptlist)
         {
-            if (GameData.Deck.Count() == 0)
+             Instantiate_Card(i,j);
+        }
+    }
+    public void PlayCard(int card_num,int Field_num)
+    {
+        GameData.Players[GameData.Player_Index].hands.Remove(card_num);
+        //GameData.PlayerHand[GameData.Turn_Index].Remove(card_num);
+        GameData.Field[Field_num].Add(card_num);
+        //サーバーに送る
+        Progress play_progress = new Progress();
+        play_progress.func="game-progress";
+        play_progress.progType = "play";
+        play_progress.roomObject = SerializingData();
+        string json = JsonConvert.SerializeObject(play_progress); //整形する
+        Debug.Log("play json :" + json);
+        webSocket.Send(json);
+        GameData.Players[GameData.Player_Index].plays = 0;
+    }
+    void SubGameData(RoomObject sD)
+    {
+
+        GameData.Deck = sD.deck;
+        GameData.gameState = sD.gameState;
+        GameData.Turn_Index = sD.gameTurnIndex;
+        GameData.PlayerLimit = sD.playerLimit;
+        GameData.Field.Clear();
+        GameData.Field.Add(sD.leads["desc01"]);
+        GameData.Field.Add(sD.leads["desc02"]);
+        GameData.Field.Add(sD.leads["asc01"]);
+        GameData.Field.Add(sD.leads["asc02"]);
+
+        GameData.Players.Clear();
+
+        foreach (Player temp in sD.players)
+        {
+            PlayerData temp_player = new PlayerData();
+            temp_player.hands = temp.hands;
+            temp_player.id = temp.id;
+            temp_player.name = temp.name;
+            temp_player.plays = temp.plays;
+            GameData.Players.Add(temp_player);
+        }
+        //Debug.Log(GameData.Players[0].hands.Count());
+    }
+    RoomObject SerializingData()
+    {
+        RoomObject newobj = new RoomObject();
+        newobj.deck = GameData.Deck;
+        newobj.gameState = GameData.gameState;
+        newobj.gameTurnIndex = GameData.Turn_Index;
+        newobj.minPlays = min_plays;
+        newobj.playerLimit = GameData.PlayerLimit;
+        newobj.roomId = GameData.RoomId;
+        newobj.leads.Add("desc01", GameData.Field[0]);
+        newobj.leads.Add("desc02", GameData.Field[1]);
+        newobj.leads.Add("asc01", GameData.Field[2]);
+        newobj.leads.Add("asc02", GameData.Field[3]);
+        foreach (PlayerData temp in GameData.Players)
+        {
+            Player ply_temp = new Player();
+            ply_temp.hands = temp.hands;
+            ply_temp.id = temp.id;
+            ply_temp.name = temp.name;
+            ply_temp.plays = temp.plays;
+            newobj.players.Add(ply_temp);
+        }
+        return newobj;
+    }
+    void GameStart()
+    {
+        StartHand();
+    }
+    //サーバーに接続
+    void Connect_Start()
+    {
+
+        webSocket = new WebSocket("ws://bews.tgo.asuka.icu");
+        webSocket.OnOpen += (sender, args) => { Debug.Log("WebSocket opened."); };
+        webSocket.OnMessage += (sender, args) => 
+        {
+            Debug.Log("受信 is "+args.Data);
+            if (args.Data.Contains("game-heartbeat"))
             {
-                return;
+                //pingpong
+                var send_heart = new HeatbeatData();
+                send_heart.func = "game-heartbeat";
+                send_heart.kind = "pong";
+                string json_heart = JsonConvert.SerializeObject(send_heart);
+                //Debug.Log(json_heart);
+                webSocket.Send(json_heart);
             }
-            item.Add(GameData.Deck[0]);
-            GameData.Deck.RemoveAt(0);
-        }
-        
-    }
-    void Instantiate_Card(int i)
-    {
-        GameObject obj = Instantiate(cardPrefab,Hand_Field);
-        obj.name = i.ToString();
-        Text obj_num = obj.transform.GetChild(0).gameObject.GetComponent<Text>();
-        obj_num.text = i.ToString();
-    }
-    public int GameClear_Check()
-    {
-        int tmp = 0;
-        foreach (List<int> item in GameData.PlayerHand)
-        {
-            tmp += item.Count();
-        }
-        if (tmp == 0)
-        {
-            return 1;
-        }
-        else if (tmp <= 10)
-        {
-            return 0;
-        }
-        return -1;
-    }
-    public void GameEnd_Check()
-    {
-        int count = 0;
-        foreach (int i in GameData.PlayerHand[GameData.Turn])
-        {
-            int j = 0;
-            foreach (List<int> tmp_Field in GameData.Field)
+            if (args.Data.Contains("game-start"))
             {
-                if (j < 2)
+                
+                //ゲームを開始
+                GameSerializData start_data = new GameSerializData();
+                start_data = JsonConvert.DeserializeObject<GameSerializData>(args.Data);
+                //自分のindexを検索
+                int i = 0;
+                int myindex=0;
+                
+                foreach (Player temp_player in start_data.roomObject.players)
                 {
-                    //100からスタートの列
-                    if (i < tmp_Field.Last()  || i == tmp_Field.Last() + 10)
+                    if (temp_player.id == GameData.UUId)
                     {
-                        count++;
-                        break;
+                        myindex = i;
                     }
+                    i++;
+                }
+                Debug.Log("myindex is " + myindex);
+                GameData.Player_Index = myindex;
+
+                Debug.Log("myindex is " + GameData.Player_Index + "nowindex is " + start_data.roomObject.gameTurnIndex);
+                //自分のターンかどうか判断
+                if (start_data.roomObject.gameTurnIndex == GameData.Player_Index)
+                {
+                    player_state = 1;
+                    yourturn = true;
+                }
+
+                //送られたデータを反映させる・
+                SubGameData(start_data.roomObject);
+                GameData.gameState = 1;
+
+
+            }
+            if (args.Data.Contains("game-update"))
+            {
+                Update update_data = JsonConvert.DeserializeObject<Update>(args.Data);
+                if (args.Data.Contains("next-turn"))
+                {
+                    GameData.Turn_Index= update_data.roomObject.gameTurnIndex;
+                    //手札補充
+                    before_hand.Clear();
+                    before_hand = GameData.Players[GameData.Player_Index].hands;
+                    SubGameData(update_data.roomObject);
+                    updatehand = true;
+
+                    //次のターンに変え、自分のターンだったらプレイ可能にする。
+                    if (GameData.Turn_Index == GameData.Player_Index)
+                    {
+                        yourturn = true;
+                        player_state = 1;
+                    }
+
+
                 }
                 else
                 {
-                    //1からスタートの列
-                    if (i > tmp_Field.Last() || i == tmp_Field.Last() - 10)
-                    {
-                        count++;
-                        break;
-                    }
-                }
-                j++;
-            }
-            
-        }
-        if (count >= min_plays - play_count)
-        {
-            return;
-        }
-        //ゲームエンド
-        //Debug.Log("count = " + count+"min-playcount"+ (min_plays - play_count));
-        readyUI.SetActive(true);
-        Text txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-        txt_tmp.text = "ゲーム失敗!!!\r\nん～～残念！w";
-        player_state = -1;
-    }
-    void Clear()
-    {
-        Text txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-        txt_tmp.text = "勝利!!!\r\n引き続き完全勝利を目指しましょう";
-        GameData.Clear = 0;
-        min_plays = 1;
-    }
-    public  void PerfectClear()
-    {
-        readyUI.SetActive(true);
-        Text txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-        txt_tmp.text = "完全勝利!!!!!";
-        GameData.Clear = 1;
-        player_state = -1;
-    }
-    public void Turn_End()
-    {
-        Generate_SplitHand();
-        player_state = 2;
-        Text txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-        txt_tmp.text = "player"+GameData.Turn.ToString() + "のターンが終了";
-        readyUI.SetActive(true);
-        play_count = 0;
-        int i=0;
-        foreach (List<int> hand in GameData.PlayerHand)
-        {
-            foreach (int j in hand)
-            {
-                Debug.Log("player" + i + " : " + j);
-            }
-            i++;
-        }
-    }
-    public void Ready()
-    {
-        if (player_state == 2)
-        {
-            //終了後待機
-            //次のプレイヤーのターンにする。
-            GameData.Turn++;
-            if (GameData.Turn == GameData.PlayerLimit)
-            {
-                GameData.Turn = 0;
-            }
-            //手札全部消去
-            foreach (Transform child in Hand_Field)
-            {
-                GameObject.Destroy(child.gameObject);
-            }
-            //ゲームクリア判定→終了判定をここに入れる
-            Text txt_tmp;
-            switch (GameClear_Check())
-            {
-                case 1:
-                    //パーフェクトクリア
-                    PerfectClear();
-                    break;
-                case 0:
-                    //クリア
-                    if (GameData.Clear == 0)
-                    {
-                        //すでにクリア条件達成済みのため続行
-                        txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-                        txt_tmp.text = "player" + GameData.Turn.ToString() + "のターン";
-                        player_state = 0;
+                    //Fieldの差分をチェックし画面更新し、データを全更新する
 
-                    }
-                    else
+                    before_field.Clear();
+                    for (int i = 0; i < 4; i++)
                     {
-                        //初クリア
-                        Clear();
+                        before_field.Add(GameData.Field[i]);
                     }
-                    break;
-                case -1:
-                    //未クリア
-                    
-                    txt_tmp = readyUI.transform.GetChild(0).gameObject.GetComponent<Text>();
-                    txt_tmp.text = "player" + GameData.Turn.ToString() + "のターン";
-                    player_state = 0;
-                    break;
+
+                    SubGameData(update_data.roomObject);
+                    updatefield = true;
+
+                }
+
+                
+                
             }
-            //終了判定
-            GameEnd_Check();
-        }
-        else if(player_state ==0)
+            if (args.Data.Contains("game-end"))
+            {
+                GameEnd end_data = JsonConvert.DeserializeObject<GameEnd>(args.Data);
+                if (end_data.endType == "badEnd")
+                {
+                    badend = true;
+                }
+                else if (end_data.endType == "preEnd")
+                {
+
+                }
+                else if (end_data.endType == "preForcedEnd")
+                {
+
+                }
+                else if (end_data.endType == "perfectEnd")
+                {
+
+                }
+            }
+
+
+
+        };
+        webSocket.OnError += (sender, args) => { Debug.Log("Error"); };
+        webSocket.OnClose += (sender, args) => { Debug.Log("WebScoket closed"); };
+        webSocket.Connect();
+
+        if (GameData.PlayerLimit == -1)
         {
-            //開始待機時
-            Generate_bundleHand();
-            readyUI.SetActive(false);
-            player_state = 1;
+            //部屋に入るを選択
+            var data = new Enter_StartSerializData();
+
+            data.func = "join-game";
+            data.name = GameData.Player_Name;
+            data.roomId = GameData.RoomId;
+            System.Guid guid = System.Guid.NewGuid();
+            GameData.UUId = guid.ToString();
+            data.uuid = guid.ToString();
+            string json = JsonConvert.SerializeObject(data); //整形する
+            webSocket.Send(json);
         }
-    }
-    public void Update_Ui()
-    {
-        int temp = 0;
-        foreach (List<int> item in GameData.PlayerHand)
+        else
         {
-            temp += item.Count();
+            //部屋を作るを選択
+            var data = new Create_StartSerializData();
+
+            data.func = "join-game";
+            data.name = GameData.Player_Name;
+            data.playerLimit = GameData.PlayerLimit;
+            data.roomId = GameData.RoomId;
+            System.Guid guid = System.Guid.NewGuid();
+            data.uuid = guid.ToString();
+            string json = JsonConvert.SerializeObject(data); //整形する
+            webSocket.Send(json);
         }
-        Text text_tmp = Status.transform.GetChild(0).gameObject.GetComponent<Text>();
-        text_tmp.text = "山札" + GameData.Deck.Count() + "枚 : 残りカード" + (GameData.Deck.Count() + temp)+"枚\r\n"+"現在のプレイ数/必要プレイ数 : "+play_count+"/"+min_plays;
+        
     }
     // Start is called before the first frame update
     void Start()
     {
-        Generate_Field();
-        Generate_Deck();
-        SetPlayer_Hand();
-    }
 
+        //サーバーに接続
+        Connect_Start();
+        
+    }
+    
     // Update is called once per frame
     void Update()
     {
-        Update_Ui();
+        if (GameData.gameState == 1)
+        {
+            if (start == false)
+            {
+                //ゲームが開始された
+                GameStart();
+                start = true;
+                Debug.Log(player_state);
+            }
+        }
+        if (updatefield == true)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                UpdateField(before_field[i], GameData.Field[i], i);
+            }
+            updatefield = false;
+        }
+        if (yourturn == true)
+        {
+            yourturn = false;
+
+        }
+        if (updatehand == true)
+        {
+            UpdateHand(before_hand, GameData.Players[GameData.Player_Index].hands);
+            updatehand = false;
+        }
+        if (badend == true)
+        {
+            //バッドエンド時の処理
+            Debug.Log("gameend");
+            player_state = 0;
+            GameData.gameState = 0;
+            Massagetext.GetComponent<Text>().text = "ゲーム失敗です!!!!";
+            badend=false;
+        }
+        if (GameData.gameState != 0)
+        {
+            Update_Ui();
+        }
+
     }
 }
