@@ -127,6 +127,7 @@ public class Main : MonoBehaviour
     [SerializeField] GameObject Status;
     [SerializeField] Transform Board;
     [SerializeField] GameObject Massagetext;
+    [SerializeField] GameObject PopupObj;
 
     public int player_state = -1;
     public int play_count = 0;
@@ -137,6 +138,10 @@ public class Main : MonoBehaviour
     public bool yourturn = false;
     public bool updatehand = false;
     public bool badend = false;
+    public bool preEnd = false;
+    public bool preForcedEnd = false;
+    public bool perfectEnd = false;
+
     public List<List<int>> before_field= new List<List<int>>();
     public List<int> before_hand = new List<int>();
 
@@ -286,6 +291,11 @@ public class Main : MonoBehaviour
         }
         return newobj;
     }
+    void Popup(string msg)
+    {
+        PopupObj.SetActive(true);
+        PopupObj.transform.GetChild(1).gameObject.GetComponent<Text>().text = msg;
+    }
     void GameStart()
     {
         StartHand();
@@ -392,15 +402,15 @@ public class Main : MonoBehaviour
                 }
                 else if (end_data.endType == "preEnd")
                 {
-
+                    preEnd = true;
                 }
                 else if (end_data.endType == "preForcedEnd")
                 {
-
+                    preForcedEnd = true;
                 }
                 else if (end_data.endType == "perfectEnd")
                 {
-
+                    perfectEnd = true;
                 }
             }
 
@@ -429,7 +439,6 @@ public class Main : MonoBehaviour
         {
             //部屋を作るを選択
             var data = new Create_StartSerializData();
-
             data.func = "join-game";
             data.name = GameData.Player_Name;
             data.playerLimit = GameData.PlayerLimit;
@@ -444,7 +453,6 @@ public class Main : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
         //サーバーに接続
         Connect_Start();
         
@@ -473,6 +481,7 @@ public class Main : MonoBehaviour
         }
         if (yourturn == true)
         {
+            Popup("あなたのターンです");
             yourturn = false;
 
         }
@@ -488,7 +497,27 @@ public class Main : MonoBehaviour
             player_state = 0;
             GameData.gameState = 0;
             Massagetext.GetComponent<Text>().text = "ゲーム失敗です!!!!";
-            badend=false;
+            Popup("ゲーム失敗");
+            badend =false;
+        }
+        if (preEnd == true)
+        {
+            Popup("ゲームクリアです!!引き続きパーフェクトクリアに向けてプレイできます");
+            preEnd = false;
+        }
+        if (preForcedEnd == true)
+        {
+            player_state = 0;
+            GameData.gameState = 0;
+            Popup("ゲームクリア");
+            preForcedEnd = false;
+        }
+        if (perfectEnd == true)
+        {
+            player_state = 0;
+            GameData.gameState = 0;
+            Popup("ゲームクリア");
+            perfectEnd = false;
         }
         if (GameData.gameState != 0)
         {

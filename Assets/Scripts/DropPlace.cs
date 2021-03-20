@@ -31,12 +31,13 @@ public class DropPlace : MonoBehaviour , IDropHandler
         }
 
         Main mainscript = main.GetComponent<Main>();
-        if (card.transform.parent.name == "0"|| card.transform.parent.name == "1" || card.transform.parent.name == "2" || card.transform.parent.name == "3" )
-        {
-            return;
-        }
+
         if (mainscript.player_state == 1)
         {
+            if (card.transform.parent.name == "0" || card.transform.parent.name == "1" || card.transform.parent.name == "2" || card.transform.parent.name == "3")
+            {
+                return;
+            }
 
             if (card != null)
             {
