@@ -20,6 +20,7 @@ public static class GameData
     public static int PlayerLimit=-1;
     public static int Hand_Limit = 6;
     public static int Turn = 0;
+    public static bool ReturnTitle=false;
     //Turnはどのプレイヤーのターンかの情報を持つ
     public static  List<int> Deck = new List<int>();
     public static List<List<int>> Field = new List<List<int>>();
@@ -141,6 +142,7 @@ public class Main : MonoBehaviour
     public bool preEnd = false;
     public bool preForcedEnd = false;
     public bool perfectEnd = false;
+    public bool gameerror = false;
 
     public List<List<int>> before_field= new List<List<int>>();
     public List<int> before_hand = new List<int>();
@@ -163,10 +165,11 @@ public class Main : MonoBehaviour
             obj_num.text = i.ToString();
         }
         else {
-            GameObject obj = Instantiate(cardPrefab, Board.GetChild(j).gameObject.transform);
+            GameObject obj = Instantiate(cardPrefab, Board.GetChild(j).GetChild(0).GetChild(0).gameObject.transform);
             obj.name = i.ToString();
             Text obj_num = obj.transform.GetChild(0).gameObject.GetComponent<Text>();
             obj_num.text = i.ToString();
+            obj.GetComponent<CanvasGroup>().blocksRaycasts = false;
 
 
 
@@ -195,7 +198,7 @@ public class Main : MonoBehaviour
             temp += item.hands.Count();
         }
         Text text_tmp = Status.transform.GetChild(0).gameObject.GetComponent<Text>();
-        text_tmp.text = "山札" + GameData.Deck.Count() + "枚 : 残りカード" + (GameData.Deck.Count() + temp)+"枚\r\n"+"現在のプレイ数/必要プレイ数 : "+play_count+"/"+min_plays;
+        text_tmp.text = "山札" + GameData.Deck.Count() + "枚 : 残りカード" + (GameData.Deck.Count() + temp)+"枚\r\n"+"現在のプレイ数/必要プレイ数 : "+GameData.Players[GameData.Player_Index].plays+"/"+min_plays;
 
         Massagetext.GetComponent<Text>().text = GameData.Players[GameData.Turn_Index].name+"のターンです";
     }
@@ -398,6 +401,7 @@ public class Main : MonoBehaviour
                 GameEnd end_data = JsonConvert.DeserializeObject<GameEnd>(args.Data);
                 if (end_data.endType == "badEnd")
                 {
+                    GameData.ReturnTitle = true;
                     badend = true;
                 }
                 else if (end_data.endType == "preEnd")
@@ -406,12 +410,20 @@ public class Main : MonoBehaviour
                 }
                 else if (end_data.endType == "preForcedEnd")
                 {
+                    GameData.ReturnTitle = true;
                     preForcedEnd = true;
                 }
                 else if (end_data.endType == "perfectEnd")
                 {
+                    GameData.ReturnTitle = true;
                     perfectEnd = true;
                 }
+            }
+            if (args.Data.Contains("game-error"))
+            {
+                GameData.ReturnTitle = true;
+                gameerror = true;
+                
             }
 
 
@@ -496,6 +508,7 @@ public class Main : MonoBehaviour
             Debug.Log("gameend");
             player_state = 0;
             GameData.gameState = 0;
+
             Massagetext.GetComponent<Text>().text = "ゲーム失敗です!!!!";
             Popup("ゲーム失敗");
             badend =false;
@@ -516,8 +529,14 @@ public class Main : MonoBehaviour
         {
             player_state = 0;
             GameData.gameState = 0;
-            Popup("ゲームクリア");
+            Popup("ゲームパーフェクトクリア!!\nThank you for playing");
             perfectEnd = false;
+        }
+        if (gameerror == true)
+        {
+            player_state = 0;
+            GameData.gameState = 0;
+            Popup("ゲームエラー : 接続できません\nタイトルに戻ります");
         }
         if (GameData.gameState != 0)
         {

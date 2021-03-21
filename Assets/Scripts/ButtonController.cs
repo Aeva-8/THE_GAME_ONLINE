@@ -48,7 +48,19 @@ public class ButtonController : Title_Mannager
         {
             return;
         }
-        player_name = Create.transform.Find("Name").gameObject.GetComponent<InputField>().text;
+        if (roomid.Length < 5)
+        {
+            //5文字以下
+            return;
+        }
+        try
+        {
+            player_name = Create.transform.Find("Name").gameObject.GetComponent<InputField>().text;
+        }
+        catch (SystemException e)
+        {
+            return;
+        }
         try
         {
             player_limit = int.Parse(Create.transform.Find("PlayerLimit").gameObject.GetComponent<InputField>().text);
@@ -80,8 +92,20 @@ public class ButtonController : Title_Mannager
         {
             return;
         }
+        if (roomid.Length < 5)
+        {
+            //5文字以下
+            return;
+        }
+        try
+        {
+            player_name = Entry.transform.Find("Name").gameObject.GetComponent<InputField>().text;
+        }
+        catch (SystemException e)
+        {
+            return;
+        }
         
-        player_name = Entry.transform.Find("Name").gameObject.GetComponent<InputField>().text;
         GameData.RoomId = roomid;
         GameData.Player_Name = player_name;
         //シーン遷移

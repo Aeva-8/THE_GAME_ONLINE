@@ -29,8 +29,14 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnEndDrag(PointerEventData eventData)
     {
+
         transform.SetParent(Field, false);
-        GetComponent<CanvasGroup>().blocksRaycasts = true;
+        if (transform.parent.name != "Content")
+        {
+            GetComponent<CanvasGroup>().blocksRaycasts = true;
+        }
+        
+
     }
 
     // Start is called before the first frame update

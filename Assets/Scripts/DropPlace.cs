@@ -34,13 +34,14 @@ public class DropPlace : MonoBehaviour , IDropHandler
 
         if (mainscript.player_state == 1)
         {
-            if (card.transform.parent.name == "0" || card.transform.parent.name == "1" || card.transform.parent.name == "2" || card.transform.parent.name == "3")
-            {
-                return;
-            }
+
 
             if (card != null)
             {
+                if (card.transform.parent.name == "Content")
+                {
+                    return;
+                }
                 if (this.gameObject.name == "0" || this.gameObject.name == "1")
                 {
                     //100からスタートの列
@@ -62,8 +63,11 @@ public class DropPlace : MonoBehaviour , IDropHandler
                 mainscript.PlayCard(obj_num,Field_num);
                 Text card_text = eventData.pointerDrag.transform.GetChild(0).gameObject.GetComponent<Text>();
                 //card_text.fontSize = 45;
-                card.Field = this.transform;
+                card.Field = this.transform.GetChild(0).GetChild(0).gameObject.transform;
+                //Destroy(card.gameObject.GetComponent<Card_movement>());
+                card.gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false;
                 //mainscript.GameEnd_Check();
+                this.GetComponent<ScrollRect>().verticalNormalizedPosition = 0;
             }
         }
         
