@@ -33,6 +33,14 @@ public class ButtonController : Title_Mannager
         {
             this.Entry_EntryButtonClick();
         }
+        else if ("Entry_Return".Equals(objectName))
+        {
+            this.Entry_ReturnButtonClick();
+        }
+        else if ("Create_Return".Equals(objectName))
+        {
+            this.Create_ReturnButtonClick();
+        }
         else
         {
             throw new System.Exception("Not implemented!!");
@@ -124,5 +132,15 @@ public class ButtonController : Title_Mannager
         Debug.Log("EntryButton Click");
         Entry.SetActive(true);
         Main.SetActive(false);
+    }
+    public void Entry_ReturnButtonClick()
+    {
+        Entry.SetActive(false);
+        Main.SetActive(true);
+    }
+    public void Create_ReturnButtonClick()
+    {
+        Create.SetActive(false);
+        Main.SetActive(true);
     }
 }

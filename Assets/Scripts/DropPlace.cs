@@ -62,7 +62,7 @@ public class DropPlace : MonoBehaviour , IDropHandler
                 //プレイ状況をメイン関数に送る。
                 mainscript.PlayCard(obj_num,Field_num);
                 Text card_text = eventData.pointerDrag.transform.GetChild(0).gameObject.GetComponent<Text>();
-                //card_text.fontSize = 45;
+                card_text.fontSize = 70;
                 card.Field = this.transform.GetChild(0).GetChild(0).gameObject.transform;
                 //Destroy(card.gameObject.GetComponent<Card_movement>());
                 card.gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false;

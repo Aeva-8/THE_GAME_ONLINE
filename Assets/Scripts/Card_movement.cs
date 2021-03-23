@@ -13,6 +13,7 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (Field.name == "Hand_Field")
         {
             transform.SetParent(Field.parent, false);
+
             GetComponent<CanvasGroup>().blocksRaycasts = false;
         }
         
@@ -22,6 +23,7 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         if (Field.name == "Hand_Field")
         {
+
             transform.position = eventData.position;
         }
 
@@ -35,7 +37,7 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             GetComponent<CanvasGroup>().blocksRaycasts = true;
         }
-        
+
 
     }
 

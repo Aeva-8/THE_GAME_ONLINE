@@ -170,6 +170,7 @@ public class Main : MonoBehaviour
             Text obj_num = obj.transform.GetChild(0).gameObject.GetComponent<Text>();
             obj_num.text = i.ToString();
             obj.GetComponent<CanvasGroup>().blocksRaycasts = false;
+            obj_num.fontSize = 70;
 
 
 
