@@ -12,6 +12,8 @@ public class ButtonController : Title_Mannager
     [SerializeField] GameObject Main;
     [SerializeField] GameObject Entry;
     [SerializeField] GameObject Create;
+    [SerializeField] Button MainCreateBtn;
+    [SerializeField] Button MainEntryBtn;
     string roomid;
     string player_name;
     int player_limit;
@@ -142,7 +144,10 @@ public class ButtonController : Title_Mannager
         .Take(1)
           .Subscribe(_ => {
               Create.SetActive(true);
-                Main.SetActive(false);
+              Create.transform.DOScale(1f, 0.2f)
+              .SetEase(Ease.OutExpo);
+              MainCreateBtn.interactable = false;
+              MainEntryBtn.interactable = false;
           });
     }
 
@@ -153,20 +158,26 @@ public class ButtonController : Title_Mannager
         .Delay(TimeSpan.FromMilliseconds(200))
         .Take(1)
           .Subscribe(_ => {
-              Entry.SetActive(true);
-              Main.SetActive(false);
+              Entry.transform.DOScale(1f, 0.2f)
+              .SetEase(Ease.OutExpo);
+              MainCreateBtn.interactable = false;
+              MainEntryBtn.interactable = false;
           });
         
     }
     public void Entry_ReturnButtonClick()
     {
-        Entry.SetActive(false);
-        Main.SetActive(true);
+        Entry.transform.DOScale(0f, 0.2f)
+              .SetEase(Ease.OutExpo);
+        MainCreateBtn.interactable = true;
+        MainEntryBtn.interactable = true;
     }
     public void Create_ReturnButtonClick()
     {
-        Create.SetActive(false);
-        Main.SetActive(true);
+        Create.transform.DOScale(0f, 0.2f)
+            .SetEase(Ease.OutExpo);
+        MainCreateBtn.interactable = true;
+        MainEntryBtn.interactable = true;
     }
     public void ButtonAnimation(string objname)
     {
@@ -180,9 +191,5 @@ public class ButtonController : Title_Mannager
         .Subscribe(_ => {
             obj.transform.DOScale(1f, 0f).SetEase(Ease.OutElastic);
         });
-    }
-    public void EntryPopAnimation()
-    {
-
     }
 }
