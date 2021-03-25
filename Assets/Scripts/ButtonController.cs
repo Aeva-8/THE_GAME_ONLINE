@@ -1,9 +1,11 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UniRx;
 
 public class ButtonController : Title_Mannager
 {
@@ -15,6 +17,7 @@ public class ButtonController : Title_Mannager
     int player_limit;
     protected override void OnClick(string objectName)
     {
+        ButtonAnimation(objectName);
         Debug.Log("ButtonName is "+ objectName);
         // 渡されたオブジェクト名で処理を分岐
         if ("Create".Equals(objectName))
@@ -84,10 +87,15 @@ public class ButtonController : Title_Mannager
         GameData.RoomId = roomid;
         GameData.Player_Name = player_name;
         GameData.PlayerLimit = player_limit;
-        
-        //シーン遷移
-        SceneManager.LoadScene("MainScene");
 
+        //シーン遷移
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+          .Subscribe(_ =>
+          {
+              SceneManager.LoadScene("MainScene");
+          });
 
     }
     private void Entry_EntryButtonClick()
@@ -117,21 +125,38 @@ public class ButtonController : Title_Mannager
         GameData.RoomId = roomid;
         GameData.Player_Name = player_name;
         //シーン遷移
-        Debug.Log("Entry_Enter");
-        SceneManager.LoadScene("MainScene");
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+          .Subscribe(_ =>
+          {
+              Debug.Log("Entry_Enter");
+              SceneManager.LoadScene("MainScene");
+          });
     }
     private void CreateButtonClick()
     {
         Debug.Log("CreateButton Click");
-        Create.SetActive(true);
-        Main.SetActive(false);
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+          .Subscribe(_ => {
+              Create.SetActive(true);
+                Main.SetActive(false);
+          });
     }
 
     private void EntryButtonClick()
     {
         Debug.Log("EntryButton Click");
-        Entry.SetActive(true);
-        Main.SetActive(false);
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+          .Subscribe(_ => {
+              Entry.SetActive(true);
+              Main.SetActive(false);
+          });
+        
     }
     public void Entry_ReturnButtonClick()
     {
@@ -142,5 +167,22 @@ public class ButtonController : Title_Mannager
     {
         Create.SetActive(false);
         Main.SetActive(true);
+    }
+    public void ButtonAnimation(string objname)
+    {
+        GameObject obj = GameObject.Find(objname);
+        obj.transform.DOPunchScale(
+            new Vector3(0.1f, 0.1f),0.2f ,1 
+        ).SetEase(Ease.OutExpo); 
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+        .Subscribe(_ => {
+            obj.transform.DOScale(1f, 0f).SetEase(Ease.OutElastic);
+        });
+    }
+    public void EntryPopAnimation()
+    {
+
     }
 }
