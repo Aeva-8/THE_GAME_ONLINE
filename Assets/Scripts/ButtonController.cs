@@ -167,17 +167,29 @@ public class ButtonController : Title_Mannager
     }
     public void Entry_ReturnButtonClick()
     {
-        Entry.transform.DOScale(0f, 0.2f)
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+        .Subscribe(_ => {
+            Entry.transform.DOScale(0f, 0.2f)
               .SetEase(Ease.OutExpo);
-        MainCreateBtn.interactable = true;
-        MainEntryBtn.interactable = true;
+            MainCreateBtn.interactable = true;
+            MainEntryBtn.interactable = true;
+        });
+        
     }
     public void Create_ReturnButtonClick()
     {
-        Create.transform.DOScale(0f, 0.2f)
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+        .Subscribe(_ => {
+            Create.transform.DOScale(0f, 0.2f)
             .SetEase(Ease.OutExpo);
-        MainCreateBtn.interactable = true;
-        MainEntryBtn.interactable = true;
+            MainCreateBtn.interactable = true;
+            MainEntryBtn.interactable = true;
+        });
+        
     }
     public void ButtonAnimation(string objname)
     {

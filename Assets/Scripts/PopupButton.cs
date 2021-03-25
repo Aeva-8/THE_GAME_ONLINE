@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,7 +25,8 @@ public class PopupButton : MonoBehaviour
             GameData.PlayerLimit = -1;
             SceneManager.LoadScene("Title");
         }
-        this.transform.parent.gameObject.SetActive(false);
+        transform.parent.DOScale(0f, 0.2f)
+            .SetEase(Ease.OutExpo);
 
     }
 }

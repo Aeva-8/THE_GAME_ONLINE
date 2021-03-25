@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using WebSocketSharp;
 using System.Threading;
 using Newtonsoft.Json;
+using DG.Tweening;
 
 public static class GameData
 {
@@ -297,7 +298,8 @@ public class Main : MonoBehaviour
     }
     void Popup(string msg)
     {
-        PopupObj.SetActive(true);
+        PopupObj.transform.DOScale(1f, 0.2f)
+            .SetEase(Ease.OutExpo);
         PopupObj.transform.GetChild(1).gameObject.GetComponent<Text>().text = msg;
     }
     void GameStart()
@@ -516,7 +518,7 @@ public class Main : MonoBehaviour
         }
         if (preEnd == true)
         {
-            Popup("ゲームクリアです!!引き続きパーフェクトクリアに向けてプレイできます");
+            Popup("ゲームクリアです!!\n引き続きパーフェクトクリアに向けて\nプレイできます");
             preEnd = false;
         }
         if (preForcedEnd == true)
