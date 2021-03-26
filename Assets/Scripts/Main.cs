@@ -164,6 +164,7 @@ public class Main : MonoBehaviour
             obj.name = i.ToString();
             Text obj_num = obj.transform.GetChild(0).gameObject.GetComponent<Text>();
             obj_num.text = i.ToString();
+            HandSort();
         }
         else {
             GameObject obj = Instantiate(cardPrefab, Board.GetChild(j).GetChild(0).GetChild(0).gameObject.transform);
@@ -253,6 +254,7 @@ public class Main : MonoBehaviour
         GameData.gameState = sD.gameState;
         GameData.Turn_Index = sD.gameTurnIndex;
         GameData.PlayerLimit = sD.playerLimit;
+        min_plays = sD.minPlays;
         GameData.Field.Clear();
         GameData.Field.Add(sD.leads["desc01"]);
         GameData.Field.Add(sD.leads["desc02"]);
@@ -301,6 +303,27 @@ public class Main : MonoBehaviour
         PopupObj.transform.DOScale(1f, 0.2f)
             .SetEase(Ease.OutExpo);
         PopupObj.transform.GetChild(1).gameObject.GetComponent<Text>().text = msg;
+    }
+    public void HandSort()
+    {
+        List<Transform> objList = new List<Transform>();
+
+        // 子階層のGameObject取得
+        var childCount = Hand_Field.gameObject.transform.childCount;
+        for (int i = 0; i < childCount; i++)
+        {
+            objList.Add(Hand_Field.gameObject.transform.GetChild(i));
+        }
+
+        // オブジェクトを名前で昇順ソート
+        // ★ここを用途に合わせて変更してください
+        objList.Sort((obj1, obj2) => string.Compare(obj1.name, obj2.name));
+
+        // ソート結果順にGameObjectの順序を反映
+        foreach (var obj in objList)
+        {
+            obj.SetSiblingIndex(childCount - 1);
+        }
     }
     void GameStart()
     {

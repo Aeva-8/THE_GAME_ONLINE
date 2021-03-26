@@ -37,7 +37,8 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         {
             GetComponent<CanvasGroup>().blocksRaycasts = true;
         }
-
+        Main mainscript = GameObject.Find("Game_Maneger").GetComponent<Main>();
+        mainscript.HandSort();
 
     }
 
