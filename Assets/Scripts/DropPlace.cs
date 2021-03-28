@@ -68,6 +68,7 @@ public class DropPlace : MonoBehaviour , IDropHandler
                 card.gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false;
                 //mainscript.GameEnd_Check();
                 this.GetComponent<ScrollRect>().verticalNormalizedPosition = 0;
+                GameData.card_move = new List<int>();
             }
         }
         

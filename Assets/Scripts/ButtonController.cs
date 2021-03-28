@@ -14,6 +14,7 @@ public class ButtonController : Title_Mannager
     [SerializeField] GameObject Create;
     [SerializeField] Button MainCreateBtn;
     [SerializeField] Button MainEntryBtn;
+    public AudioClip Entersound;
     string roomid;
     string player_name;
     int player_limit;
@@ -138,40 +139,42 @@ public class ButtonController : Title_Mannager
     }
     private void CreateButtonClick()
     {
+        MainCreateBtn.interactable = false;
+        MainEntryBtn.interactable = false;
         Debug.Log("CreateButton Click");
         Observable.Return(Unit.Default)
-        .Delay(TimeSpan.FromMilliseconds(200))
+        .Delay(TimeSpan.FromMilliseconds(150))
         .Take(1)
           .Subscribe(_ => {
               Create.SetActive(true);
-              Create.transform.DOScale(1f, 0.2f)
+              Create.transform.DOScale(1f, 0.1f)
               .SetEase(Ease.OutExpo);
-              MainCreateBtn.interactable = false;
-              MainEntryBtn.interactable = false;
+
           });
     }
 
     private void EntryButtonClick()
     {
+        MainCreateBtn.interactable = false;
+        MainEntryBtn.interactable = false;
         Debug.Log("EntryButton Click");
         Observable.Return(Unit.Default)
-        .Delay(TimeSpan.FromMilliseconds(200))
+        .Delay(TimeSpan.FromMilliseconds(150))
         .Take(1)
           .Subscribe(_ => {
-              Entry.transform.DOScale(1f, 0.2f)
+              Entry.transform.DOScale(1f, 0.1f)
               .SetEase(Ease.OutExpo);
-              MainCreateBtn.interactable = false;
-              MainEntryBtn.interactable = false;
+
           });
         
     }
     public void Entry_ReturnButtonClick()
     {
         Observable.Return(Unit.Default)
-        .Delay(TimeSpan.FromMilliseconds(200))
+        .Delay(TimeSpan.FromMilliseconds(150))
         .Take(1)
         .Subscribe(_ => {
-            Entry.transform.DOScale(0f, 0.2f)
+            Entry.transform.DOScale(0f, 0.1f)
               .SetEase(Ease.OutExpo);
             MainCreateBtn.interactable = true;
             MainEntryBtn.interactable = true;
@@ -181,7 +184,7 @@ public class ButtonController : Title_Mannager
     public void Create_ReturnButtonClick()
     {
         Observable.Return(Unit.Default)
-        .Delay(TimeSpan.FromMilliseconds(200))
+        .Delay(TimeSpan.FromMilliseconds(150))
         .Take(1)
         .Subscribe(_ => {
             Create.transform.DOScale(0f, 0.2f)
@@ -196,7 +199,9 @@ public class ButtonController : Title_Mannager
         GameObject obj = GameObject.Find(objname);
         obj.transform.DOPunchScale(
             new Vector3(0.1f, 0.1f),0.2f ,1 
-        ).SetEase(Ease.OutExpo); 
+        ).SetEase(Ease.OutExpo);
+        AudioSource audioSource = GetComponent<AudioSource>();
+        audioSource.PlayOneShot(Entersound);
         Observable.Return(Unit.Default)
         .Delay(TimeSpan.FromMilliseconds(200))
         .Take(1)

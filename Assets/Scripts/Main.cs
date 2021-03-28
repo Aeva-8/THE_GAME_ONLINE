@@ -22,6 +22,7 @@ public static class GameData
     public static int Hand_Limit = 6;
     public static int Turn = 0;
     public static bool ReturnTitle=false;
+    public static List<int> card_move= new List<int>();
     //Turnはどのプレイヤーのターンかの情報を持つ
     public static  List<int> Deck = new List<int>();
     public static List<List<int>> Field = new List<List<int>>();
@@ -130,6 +131,7 @@ public class Main : MonoBehaviour
     [SerializeField] Transform Board;
     [SerializeField] GameObject Massagetext;
     [SerializeField] GameObject PopupObj;
+    [SerializeField] GameObject NamePrefab;
 
     public int player_state = -1;
     public int play_count = 0;
@@ -150,7 +152,16 @@ public class Main : MonoBehaviour
 
     //-1=操作不能.0=開始待機,1=操作可能,2=終了後待機
 
-
+    void Start_Instantiate_Name()
+    {
+        foreach(PlayerData playerdata in  GameData.Players)
+        {
+            GameObject obj = Instantiate(NamePrefab, Massagetext.transform);
+            Text obj_text = obj.GetComponent<Text>();
+            obj_text.text = playerdata.name;
+        }
+        
+    }
     void  Instantiate_Card(int i,int j)
     {
         //-1で手札0,1,2,3はField
@@ -203,7 +214,6 @@ public class Main : MonoBehaviour
         Text text_tmp = Status.transform.GetChild(0).gameObject.GetComponent<Text>();
         text_tmp.text = "山札" + GameData.Deck.Count() + "枚 : 残りカード" + (GameData.Deck.Count() + temp)+"枚\r\n"+"現在のプレイ数/必要プレイ数 : "+GameData.Players[GameData.Player_Index].plays+"/"+min_plays;
 
-        Massagetext.GetComponent<Text>().text = GameData.Players[GameData.Turn_Index].name+"のターンです";
     }
     void StartHand()
     {
@@ -222,6 +232,7 @@ public class Main : MonoBehaviour
 
             Instantiate_Card(i,-1);
         }
+        
     }
     void UpdateField(List<int> before_tmp, List<int> after_tmp,int j)
     {
@@ -230,6 +241,21 @@ public class Main : MonoBehaviour
         foreach (int i in exceptlist)
         {
              Instantiate_Card(i,j);
+        }
+    }
+    void UpdateName()
+    {
+        for (int i = 0; i < Massagetext.transform.childCount; i++)
+        {
+            Text temp_text = Massagetext.transform.GetChild(i).gameObject.GetComponent<Text>();
+            if (GameData.Turn_Index == i)
+            {
+                temp_text.color = Color.white;
+            }
+            else {
+                temp_text.color = Color.gray;
+            }
+
         }
     }
     public void PlayCard(int card_num,int Field_num)
@@ -315,8 +341,6 @@ public class Main : MonoBehaviour
             objList.Add(Hand_Field.gameObject.transform.GetChild(i));
         }
 
-        // オブジェクトを名前で昇順ソート
-        // ★ここを用途に合わせて変更してください
         objList.Sort((obj1, obj2) => string.Compare(obj1.name, obj2.name));
 
         // ソート結果順にGameObjectの順序を反映
@@ -506,6 +530,7 @@ public class Main : MonoBehaviour
                 //ゲームが開始された
                 GameStart();
                 start = true;
+                Start_Instantiate_Name();
                 Debug.Log(player_state);
             }
         }
@@ -526,6 +551,7 @@ public class Main : MonoBehaviour
         if (updatehand == true)
         {
             UpdateHand(before_hand, GameData.Players[GameData.Player_Index].hands);
+            HandSort();
             updatehand = false;
         }
         if (badend == true)
@@ -567,6 +593,7 @@ public class Main : MonoBehaviour
         if (GameData.gameState != 0)
         {
             Update_Ui();
+            UpdateName();
         }
 
     }

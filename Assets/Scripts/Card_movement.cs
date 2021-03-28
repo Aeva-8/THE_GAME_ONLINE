@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -13,8 +15,8 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         if (Field.name == "Hand_Field")
         {
             transform.SetParent(Field.parent, false);
-
             GetComponent<CanvasGroup>().blocksRaycasts = false;
+            Check(int.Parse(this.name));
         }
         
     }
@@ -23,7 +25,6 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
     {
         if (Field.name == "Hand_Field")
         {
-
             transform.position = eventData.position;
         }
 
@@ -39,9 +40,65 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
         }
         Main mainscript = GameObject.Find("Game_Maneger").GetComponent<Main>();
         mainscript.HandSort();
+        GameData.card_move = new List<int>();
 
     }
+    public void   Check(int card)
+    {
+        if (card != -1)
+        {
+            int last_num = -1;
+            int nowcard = card;
+            //カードを持った状態
+            for (int i = 0; i < 4; i++)
+            {
+                try
+                {
+                    last_num = GameData.Field[i].Last();
+                }
+                catch (SystemException e)
+                {
+                    if (i == 0 || i == 1)
+                    {
+                        last_num = 100;
+                    }
+                    else if (i == 2 || i == 3)
+                    {
+                        last_num = 1;
+                    }
+                }
+                if (i < 2)
+                {
+                    //100
+                    if (nowcard > last_num && nowcard != last_num + 10)
+                    {
+                        //×
+                        GameData.card_move.Add(0);
+                    }
+                    else
+                    {
+                        //〇
+                        GameData.card_move.Add(1);
+                    }
+                }
+                else
+                {
+                    //1
+                    if (nowcard < last_num && nowcard != last_num - 10)
+                    {
+                        //×
+                        GameData.card_move.Add(0);
+                    }
+                    else
+                    {
+                        //〇
+                        GameData.card_move.Add(1);
+                    }
 
+                }
+            }
+        }
+    }
     // Start is called before the first frame update
     void Start()
     {
