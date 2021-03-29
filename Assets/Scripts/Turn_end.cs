@@ -6,6 +6,8 @@ using UnityEngine;
 public class Turn_end : MonoBehaviour
 {
     [SerializeField] GameObject main;
+    [SerializeField] GameObject Audio;
+    public AudioClip Clip;
     // Start is called before the first frame update
     void Start()
     {
@@ -26,6 +28,9 @@ public class Turn_end : MonoBehaviour
             {
 
                 mainscript.Turn_End();
+                AudioSource audio = Audio.GetComponent<AudioSource>();
+                audio.clip = Clip;
+                audio.PlayDelayed(1.0f);
             }
             
         }
