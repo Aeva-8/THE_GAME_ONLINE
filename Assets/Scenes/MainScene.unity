@@ -2105,6 +2105,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   main: {fileID: 657250515}
+  Audio: {fileID: 358833076}
+  Clip: {fileID: 8300000, guid: f3fb0f1f6f639b847ab64b695f76106e, type: 3}
 --- !u!1 &1209351074
 GameObject:
   m_ObjectHideFlags: 0
