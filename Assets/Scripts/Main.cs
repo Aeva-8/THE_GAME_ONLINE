@@ -349,6 +349,7 @@ public class Main : MonoBehaviour
             obj.SetSiblingIndex(childCount - 1);
         }
     }
+
     void GameStart()
     {
         StartHand();

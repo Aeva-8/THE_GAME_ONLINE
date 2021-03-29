@@ -14,7 +14,6 @@ public class ButtonController : Title_Mannager
     [SerializeField] GameObject Create;
     [SerializeField] Button MainCreateBtn;
     [SerializeField] Button MainEntryBtn;
-    public AudioClip Entersound;
     string roomid;
     string player_name;
     int player_limit;
@@ -200,8 +199,6 @@ public class ButtonController : Title_Mannager
         obj.transform.DOPunchScale(
             new Vector3(0.1f, 0.1f),0.2f ,1 
         ).SetEase(Ease.OutExpo);
-        AudioSource audioSource = GetComponent<AudioSource>();
-        audioSource.PlayOneShot(Entersound);
         Observable.Return(Unit.Default)
         .Delay(TimeSpan.FromMilliseconds(200))
         .Take(1)

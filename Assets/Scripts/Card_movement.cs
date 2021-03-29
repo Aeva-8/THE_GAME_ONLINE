@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
-
+using UnityEngine.UI;
+using UniRx;
 
 public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public Transform Field;
+    
     public void OnBeginDrag(PointerEventData eventData)
     {
         Field = transform.parent;
@@ -32,16 +34,33 @@ public class Card_movement : MonoBehaviour, IBeginDragHandler, IDragHandler, IEn
 
     public void OnEndDrag(PointerEventData eventData)
     {
-
         transform.SetParent(Field, false);
         if (transform.parent.name != "Content")
         {
             GetComponent<CanvasGroup>().blocksRaycasts = true;
+            Observable.Return(Unit.Default)
+            .Delay(TimeSpan.FromMilliseconds(10))
+            .Take(1)
+              .Subscribe(_ =>
+              {
+                  UpdateField();
+              });
         }
         Main mainscript = GameObject.Find("Game_Maneger").GetComponent<Main>();
         mainscript.HandSort();
         GameData.card_move = new List<int>();
 
+
+
+    }
+    public void UpdateField()
+    {
+        GameObject Board = GameObject.Find("Board_Field");
+        for (int i = 0; i < 4; i++)
+        {
+            Board.transform.GetChild(i).transform.GetChild(0).GetChild(0).gameObject.GetComponent<ContentSizeFitter>().SetLayoutHorizontal();
+            Board.transform.GetChild(i).transform.GetComponent<ScrollRect>().horizontalNormalizedPosition = 1;
+        }
     }
     public void   Check(int card)
     {

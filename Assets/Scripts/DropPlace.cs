@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,9 +7,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class DropPlace : MonoBehaviour , IDropHandler
+public class DropPlace : MonoBehaviour , IDropHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] GameObject main;
+    [SerializeField] GameObject NumUi;
     public void OnDrop(PointerEventData eventData)
     {
         Card_movement card = eventData.pointerDrag.GetComponent<Card_movement>();
@@ -67,10 +69,32 @@ public class DropPlace : MonoBehaviour , IDropHandler
                 //Destroy(card.gameObject.GetComponent<Card_movement>());
                 card.gameObject.GetComponent<CanvasGroup>().blocksRaycasts = false;
                 //mainscript.GameEnd_Check();
-                this.GetComponent<ScrollRect>().verticalNormalizedPosition = 0;
                 GameData.card_move = new List<int>();
             }
         }
+        
+    }
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (eventData.pointerDrag != null)
+        {
+            Card_movement card = eventData.pointerDrag.GetComponent<Card_movement>();
+            Debug.Log("乗ってる");
+            if (card != null)
+            {
+                GameObject Num_obj = NumUi.transform.GetChild(int.Parse(this.name)).gameObject;
+                Num_obj.transform.DOScale(1.2f, 0.2f)
+                  .SetEase(Ease.OutExpo);
+            }
+        }
+        
+
+    }
+    public void OnPointerExit(PointerEventData eventData)
+    {
+                GameObject Num_obj = NumUi.transform.GetChild(int.Parse(this.name)).gameObject;
+                Num_obj.transform.DOScale(1f, 0.2f)
+                  .SetEase(Ease.OutExpo);
         
     }
     // Start is called before the first frame update
