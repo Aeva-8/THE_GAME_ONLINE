@@ -1,13 +1,16 @@
 ﻿using DG.Tweening;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using UniRx;
 using UnityEngine;
 
 public class Turn_end : MonoBehaviour
 {
     [SerializeField] GameObject main;
     [SerializeField] GameObject Audio;
-    public AudioClip Clip;
+    public AudioClip ponClip;
+    public AudioClip turnendClip;
     // Start is called before the first frame update
     void Start()
     {
@@ -26,16 +29,27 @@ public class Turn_end : MonoBehaviour
         {
             if (GameData.Players[GameData.Player_Index].plays >= mainscript.min_plays)
             {
-
                 mainscript.Turn_End();
                 AudioSource audio = Audio.GetComponent<AudioSource>();
-                audio.clip = Clip;
-                audio.PlayDelayed(1.0f);
+                audio.clip = turnendClip;
+                audio.Play();
             }
-            
+            else {
+
+                AudioSource audio = Audio.GetComponent<AudioSource>();
+                audio.clip = ponClip;
+                audio.Play();
+            }
         }
         transform.DOPunchScale(
             new Vector3(0.1f, 0.1f), 0.2f, 1
         ).SetEase(Ease.OutExpo);
+        Observable.Return(Unit.Default)
+        .Delay(TimeSpan.FromMilliseconds(200))
+        .Take(1)
+        .Subscribe(_ => {
+            transform.DOScale(1f, 0f).SetEase(Ease.OutElastic);
+        });
+
     }
 }
